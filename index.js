@@ -42,6 +42,21 @@ async function run() {
 			const result = await itemsCollection.findOne(query);
 			res.send(result);
 		});
+		app.put("/inventory/:id", async (req, res) => {
+			const { id } = req.params;
+
+			const database = client.db("inventory-items");
+			const itemsCollection = database.collection("items");
+			const query = { _id: ObjectId(id) };
+			const updateDoc = {
+				$set: {
+					quantity: req.body.quantity,
+				},
+			};
+			const result = await itemsCollection.updateOne(query, updateDoc);
+			res.send(result);
+			console.log(result);
+		});
 		// create a document to insert
 	} finally {
 		//await client.close();
