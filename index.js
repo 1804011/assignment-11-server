@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -24,12 +24,23 @@ async function run() {
 			res.send(result);
 		});
 		app.get("/inventory-items", async (req, res) => {
+			const limit = parseInt(req.query?.limit);
 			const database = client.db("inventory-items");
 			const itemsCollection = database.collection("items");
 			const query = {};
-			const result = await itemsCollection.find(query);
+			let result;
+			if (!limit) result = await itemsCollection.find(query);
+			else result = await itemsCollection.find(query).limit(limit);
 			const items = await result.toArray();
 			res.send(items);
+		});
+		app.get("/inventory/:id", async (req, res) => {
+			const { id } = req.params;
+			const database = client.db("inventory-items");
+			const itemsCollection = database.collection("items");
+			const query = { _id: ObjectId(id) };
+			const result = await itemsCollection.findOne(query);
+			res.send(result);
 		});
 		// create a document to insert
 	} finally {
