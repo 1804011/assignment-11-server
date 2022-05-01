@@ -23,6 +23,14 @@ async function run() {
 			const result = await itemsCollection.insertOne(req.body);
 			res.send(result);
 		});
+		app.get("/inventory-items", async (req, res) => {
+			const database = client.db("inventory-items");
+			const itemsCollection = database.collection("items");
+			const query = {};
+			const result = await itemsCollection.find(query);
+			const items = await result.toArray();
+			res.send(items);
+		});
 		// create a document to insert
 	} finally {
 		//await client.close();
