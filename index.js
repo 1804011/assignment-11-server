@@ -75,6 +75,15 @@ async function run() {
 			console.log(result);
 			res.send(result);
 		});
+		app.delete("/manage-inventory/:id", async (req, res) => {
+			const { id } = req.params;
+			const database = client.db("inventory-items");
+			const itemsCollection = database.collection("items");
+			const query = { _id: ObjectId(id) };
+			const result = await itemsCollection.deleteOne(query);
+			console.log(result);
+			res.send(result);
+		});
 		// create a document to insert
 	} finally {
 		//await client.close();
