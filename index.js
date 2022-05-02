@@ -59,15 +59,21 @@ async function run() {
 		});
 		app.get("/inventory-items/:email", async (req, res) => {
 			const { email } = req.params;
-			console.log(email);
 			const database = client.db("inventory-items");
 			const itemsCollection = database.collection("items");
 			const query = { email };
 			const result = await itemsCollection.find(query);
 			const items = await result.toArray();
-
 			res.send(items);
-			console.log(items);
+		});
+		app.delete("/my-items/:id", async (req, res) => {
+			const { id } = req.params;
+			const database = client.db("inventory-items");
+			const itemsCollection = database.collection("items");
+			const query = { _id: ObjectId(id) };
+			const result = await itemsCollection.deleteOne(query);
+			console.log(result);
+			res.send(result);
 		});
 		// create a document to insert
 	} finally {
