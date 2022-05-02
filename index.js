@@ -57,6 +57,18 @@ async function run() {
 			res.send(result);
 			console.log(result);
 		});
+		app.get("/inventory-items/:email", async (req, res) => {
+			const { email } = req.params;
+			console.log(email);
+			const database = client.db("inventory-items");
+			const itemsCollection = database.collection("items");
+			const query = { email };
+			const result = await itemsCollection.find(query);
+			const items = await result.toArray();
+
+			res.send(items);
+			console.log(items);
+		});
 		// create a document to insert
 	} finally {
 		//await client.close();
