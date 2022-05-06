@@ -1,6 +1,7 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,6 +15,20 @@ const client = new MongoClient(uri, {
 	useUnifiedTopology: true,
 	serverApi: ServerApiVersion.v1,
 });
+function verifyJwt(req, res, next) {
+	const authHeader = req.headers.authorization;
+	if (!authHeader) {
+		return res.status(401).send({ message: "unauthorized access" });
+	}
+	const token = authHeader.split(" ")[1];
+	jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+		if (err) return res.status(403).send({ message: "forbidden access" });
+
+		req.decoded = decoded;
+	});
+
+	next();
+}
 async function run() {
 	try {
 		await client.connect();
@@ -55,16 +70,22 @@ async function run() {
 			};
 			const result = await itemsCollection.updateOne(query, updateDoc);
 			res.send(result);
-			console.log(result);
 		});
-		app.get("/inventory-items/:email", async (req, res) => {
+		app.get("/inventory-items/:email", verifyJwt, async (req, res) => {
+			const authHeader = req?.headers?.authorization.split(" ")[1];
+			const decodedEmail = req?.decoded?.email;
+
 			const { email } = req.params;
-			const database = client.db("inventory-items");
-			const itemsCollection = database.collection("items");
-			const query = { email };
-			const result = await itemsCollection.find(query);
-			const items = await result.toArray();
-			res.send(items);
+			if (decodedEmail == email) {
+				const database = client.db("inventory-items");
+				const itemsCollection = database.collection("items");
+				const query = { email };
+				const result = await itemsCollection.find(query);
+				const items = await result.toArray();
+				res.send(items);
+			} else {
+				res.status(403).send({ message: "forbidden access" });
+			}
 		});
 		app.delete("/my-items/:id", async (req, res) => {
 			const { id } = req.params;
@@ -81,6 +102,11 @@ async function run() {
 			const query = { _id: ObjectId(id) };
 			const result = await itemsCollection.deleteOne(query);
 			res.send(result);
+		});
+		app.post("/login", async (req, res) => {
+			const user = req.body;
+			const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN);
+			res.send({ accessToken });
 		});
 		// create a document to insert
 	} finally {
